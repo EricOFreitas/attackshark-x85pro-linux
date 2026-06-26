@@ -131,7 +131,7 @@ def main(argv: list[str] | None = None) -> int:
     p_gif.add_argument("path", help="caminho do PNG/JPG/GIF")
     p_gif.add_argument("--width", type=int, default=180, help="largura do buffer (X85 Pro=180)")
     p_gif.add_argument("--height", type=int, default=179, help="altura do buffer (X85 Pro=179)")
-    p_gif.add_argument("--xoff", type=int, default=0, help="coluna inicial da área visível (default 0)")
+    p_gif.add_argument("--xoff", type=int, default=0, help="coluna inicial visível (default 0)")
     p_gif.set_defaults(func=cmd_set_gif)
 
     args = parser.parse_args(argv)

@@ -15,6 +15,7 @@ Checksum (cobre só o header de 7 bytes, byte 0..6):
 from __future__ import annotations
 
 import datetime as _dt
+from collections.abc import Iterator
 
 REPORT_SIZE = 64
 
@@ -99,6 +100,10 @@ def build_image_init(
     `size_per_frame` é o tamanho em bytes de um frame (uint16 little-endian).
     Os 4 bytes finais (trailing) NÃO entram no checksum.
     """
+    if not 0 <= size_per_frame <= 0xFFFF:
+        raise ValueError(f"size_per_frame fora do range uint16: {size_per_frame}")
+    if not 0 <= frame_count <= 0xFF:
+        raise ValueError(f"frame_count deve caber em 1 byte (0-255): {frame_count}")
     header = bytes(
         [
             OP_IMAGE_INIT,
@@ -114,7 +119,7 @@ def build_image_init(
     return header + bytes([_checksum(header)]) + trailing
 
 
-def chunkify(frame: bytes, chunk_len: int = CHUNK_DATA_LEN):
+def chunkify(frame: bytes, chunk_len: int = CHUNK_DATA_LEN) -> Iterator[tuple[int, bytes]]:
     """Quebra os bytes de um frame em (chunk_idx, data) sequenciais."""
     for idx, base in enumerate(range(0, len(frame), chunk_len)):
         yield idx, frame[base : base + chunk_len]

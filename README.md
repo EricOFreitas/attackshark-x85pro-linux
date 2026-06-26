@@ -1,5 +1,6 @@
 # xshark
 
+![CI](https://github.com/EricOFreitas/attackshark-x85pro-linux/actions/workflows/ci.yml/badge.svg)
 ![status](https://img.shields.io/badge/status-funcional-brightgreen)
 ![python](https://img.shields.io/badge/python-%E2%89%A53.10-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
@@ -80,6 +81,17 @@ cp systemd/xshark-synctime.* ~/.config/systemd/user/
 systemctl --user daemon-reload
 systemctl --user enable --now xshark-synctime.timer
 ```
+
+## Desenvolvimento e testes
+
+```bash
+pip install -e ".[dev]"
+ruff check .     # lint
+pytest -q        # testes das funções puras (protocolo + encoding, sem hardware)
+```
+
+> Os comandos que tocam o hardware (`set-time`, `set-gif`) foram validados ao vivo no X85 Pro.
+> Os testes cobrem a montagem de pacotes e o encoding RGB565, que é onde mora a lógica.
 
 ## Créditos
 

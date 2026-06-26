@@ -64,7 +64,7 @@ class XSharkDevice:
         self._path = path or find_vendor_path()
         self._dev = None
 
-    def __enter__(self) -> "XSharkDevice":
+    def __enter__(self) -> XSharkDevice:
         self._dev = _hid().Device(path=self._path)
         return self
 

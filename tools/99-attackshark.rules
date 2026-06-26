@@ -3,7 +3,13 @@
 #   sudo cp 99-attackshark.rules /etc/udev/rules.d/
 #   sudo udevadm control --reload-rules && sudo udevadm trigger
 #
-# Usamos MODE="0666" (padrão de projetos de teclado tipo QMK/OpenRGB) porque o
-# TAG+="uaccess" nem sempre concede ACL para nós hidraw. O uaccess fica como bônus.
+# SEGURANÇA: MODE="0666" deixa o dispositivo legível/gravável por qualquer usuário
+# local (padrão de projetos de teclado tipo QMK/OpenRGB; o TAG+="uaccess" nem sempre
+# concede ACL em nós hidraw). Para uma máquina multiusuário, prefira a variante restrita
+# abaixo (0660 + grupo) — comente as linhas 0666 e descomente as 0660, e garanta que seu
+# usuário está no grupo plugdev (sudo usermod -aG plugdev $USER; depois relogar).
 SUBSYSTEM=="hidraw", ATTRS{idVendor}=="3151", ATTRS{idProduct}=="5002", MODE="0666", TAG+="uaccess"
 SUBSYSTEM=="usb",    ATTRS{idVendor}=="3151", ATTRS{idProduct}=="5002", MODE="0666", TAG+="uaccess"
+# Variante restrita (recomendada em ambiente multiusuário):
+# SUBSYSTEM=="hidraw", ATTRS{idVendor}=="3151", ATTRS{idProduct}=="5002", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+# SUBSYSTEM=="usb",    ATTRS{idVendor}=="3151", ATTRS{idProduct}=="5002", MODE="0660", GROUP="plugdev", TAG+="uaccess"
