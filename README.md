@@ -1,8 +1,20 @@
 # xshark
 
+![status](https://img.shields.io/badge/status-funcional-brightgreen)
+![python](https://img.shields.io/badge/python-%E2%89%A53.10-blue)
+![license](https://img.shields.io/badge/license-MIT-green)
+
 Driver/CLI open-source em Linux para o teclado **Attack Shark X85 Pro** (e parentes com a
 mesma telinha TFT). Foco inicial: **acertar o relógio da tela** sem depender do app oficial
 Windows/Mac — e, depois, enviar GIFs e ler bateria.
+
+## Modelos
+
+| Modelo | VID:PID | `set-time` |
+|--------|---------|------------|
+| X85 Pro | `3151:5002` | ✅ confirmado |
+| K86 | `3151:4015` | ↗ via [AttackManatee](https://github.com/Jinori/AttackManatee) |
+| outros Attack Shark com tela | ? | [reporte aqui](../../issues/new?template=modelo-compativel.md) |
 
 > ✅ **Status: `set-time` funcionando no X85 Pro.** O protocolo da tela (reversado pelo
 > [AttackManatee](https://github.com/Jinori/AttackManatee) para o K86) é compatível com o
