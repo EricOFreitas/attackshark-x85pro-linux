@@ -44,4 +44,4 @@ def test_load_frames_animated_gif(tmp_path):
 
 
 def test_default_screen_dims_are_x85():
-    assert (SCREEN_WIDTH, SCREEN_HEIGHT) == (180, 179)
+    assert (SCREEN_WIDTH, SCREEN_HEIGHT) == (138, 180)

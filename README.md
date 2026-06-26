@@ -13,7 +13,7 @@ Windows/Mac — e, depois, enviar GIFs e ler bateria.
 
 | Modelo | VID:PID | `set-time` |
 |--------|---------|------------|
-| X85 Pro | `3151:5002` | ✅ `set-time` + `set-gif` (tela 180×179) |
+| X85 Pro | `3151:5002` | ✅ `set-time` + `set-gif` (tela 138×180) |
 | K86 | `3151:4015` | ↗ via [AttackManatee](https://github.com/Jinori/AttackManatee) (tela 240×135) |
 | outros Attack Shark com tela | ? | [reporte aqui](../../issues/new?template=modelo-compativel.md) |
 
@@ -66,7 +66,7 @@ xshark set-gif a.png  # ✅ envia imagem (PNG/JPG) para a tela
 xshark set-gif a.gif  # ✅ envia GIF animado (multi-frame, em loop)
 ```
 
-A tela do X85 Pro é **180×179, RGB565 big-endian, column-major** (frame de 64800 bytes) —
+A tela do X85 Pro é **138×180, RGB565 big-endian, column-major** (frame de 49680 bytes) —
 geometria decifrada por calibração visual; ver [`docs/PROTOCOL.md`](docs/PROTOCOL.md). Para
 outros modelos, ajuste com `--width/--height/--xoff`.
 

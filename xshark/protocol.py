@@ -73,14 +73,15 @@ def build_clear() -> bytes:
 # --- Imagem / GIF (opcodes 0xA5 init e 0x25 chunk) -------------------------
 #
 # Buffer da tela do X85 Pro (decifrado por calibração visual; ajustável por CLI):
-#   180 x 179, RGB565 big-endian, ordem column-major. A tela inteira é visível.
-#   O "slot" de frame que o firmware espera é de 64800 bytes (180x179 = 64440
-#   bytes de pixel + padding até 64800). (O K86 é 240x135 — modelos diferem.)
-SCREEN_WIDTH = 180
-SCREEN_HEIGHT = 179
+#   138 x 180, RGB565 big-endian, ordem column-major. A tela inteira é visível.
+#   Frame de exatamente 138*180*2 = 49680 bytes (sem padding). (O K86 é 240x135.)
+#   ATENÇÃO: padrões periódicos (grade) enganam a calibração porque o
+#   deslocamento "encaixa" nas linhas — confirme sempre com imagem assimétrica.
+SCREEN_WIDTH = 138
+SCREEN_HEIGHT = 180
 VISIBLE_X = 0
-VISIBLE_W = 180
-FRAME_BYTES = 64800  # tamanho do slot de 1 frame esperado pelo dispositivo
+VISIBLE_W = 138
+FRAME_BYTES = 49680  # 138 * 180 * 2 — tamanho exato de 1 frame
 
 CHUNK_DATA_LEN = 56  # 0x38 bytes de pixel por chunk (o último frame pode ter menos)
 

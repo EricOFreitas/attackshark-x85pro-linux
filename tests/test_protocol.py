@@ -63,9 +63,9 @@ def test_chunk_idx_little_endian():
 
 
 def test_chunkify_counts_full_frame():
-    # 64800 bytes => 1157 chunks de 56 + 1 de 8 = 1158
+    # FRAME_BYTES=49680 => 887 chunks de 56 + 1 de 8 = 888
     chunks = list(p.chunkify(bytes(p.FRAME_BYTES)))
-    assert len(chunks) == 1158
+    assert len(chunks) == 888
     assert all(idx == i for i, (idx, _) in enumerate(chunks))
     assert len(chunks[-1][1]) == 8
     assert sum(len(d) for _, d in chunks) == p.FRAME_BYTES

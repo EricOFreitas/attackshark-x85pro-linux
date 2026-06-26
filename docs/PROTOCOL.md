@@ -60,22 +60,27 @@ shear/emenda em fotos:
 
 | Parâmetro | X85 Pro | K86 |
 |-----------|---------|-----|
-| Largura (colunas) | **180** | 240 |
-| Altura / stride (linhas por coluna) | **179** | 135 |
+| Largura (colunas) | **138** | 240 |
+| Altura / stride (linhas por coluna) | **180** | 135 |
 | Pixel | RGB565 big-endian | idem |
 | Ordem | column-major | idem |
-| Slot de frame | **64800 bytes** (180×179=64440 + padding) | 64800 |
+| Frame | **49680 bytes** (138×180×2, sem padding) | 64800 |
 | Área visível | tela inteira (sem offset) | 135×135 nas colunas 86..220 |
 
-Como medimos:
-- **Split topo/base** revelou a altura (≈180): shear sumiu perto de 179.
-- **Grade** confirmou: em S=179 as horizontais ficam retas (stride certo); largura 180 fecha
-  a maior parte da emenda.
-- **Seta/smiley** validaram orientação (topo-esquerda = origem) e que a imagem fica em pé.
+Como medimos (e onde erramos):
+- **Cuidado com padrões periódicos.** Grade, split topo/base e listras igualmente espaçadas
+  ENGANAM: um deslocamento que seja múltiplo do período "encaixa" nas linhas e parece perfeito.
+  Foi o que nos levou por horas a uma geometria errada (180×179) que parecia certa na grade.
+- **Use sempre uma imagem assimétrica** (um personagem, um rosto) como prova final. Foi um
+  Rock Lee chibi que revelou a emenda real no meio da tela.
+- O sintoma decisivo: com 180 colunas, ~30% da esquerda saía deslocada (wrap horizontal) —
+  estávamos mandando colunas demais. Reduzir a largura até a emenda sumir deu **138 colunas**.
+- A altura (stride) 180 estava certa: o lado direito nunca tinha quebra vertical.
 
-### Resíduo conhecido
-Sobra uma emenda vertical de ~1px à esquerda porque 179 não divide 32400 exatamente. A
-imagem fica perfeitamente reconhecível; refinar o offset/wrap é um bom first issue.
+### Comportamento do firmware na animação
+Ao tocar uma animação (vários frames), o firmware limpa a tela para **branco** entre os
+frames — então a animação pisca branco a cada quadro. Imagem estática (1 frame) fica perfeita.
+Suavizar isso (intervalo, ou um opcode de "não limpar") é um bom first issue.
 
 ## A confirmar (TODO da captura)
 
