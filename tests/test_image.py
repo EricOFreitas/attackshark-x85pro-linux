@@ -48,7 +48,7 @@ def test_default_screen_dims_are_x85():
 
 
 def test_fit_mode_letterboxes_without_crashing(tmp_path):
-    from xshark.protocol import VISIBLE_HEIGHT, SCREEN_HEIGHT
+    from xshark.protocol import SCREEN_HEIGHT, VISIBLE_HEIGHT
 
     assert VISIBLE_HEIGHT < SCREEN_HEIGHT  # parte do framebuffer é off-screen
     path = tmp_path / "wide.png"
