@@ -65,7 +65,11 @@ shear/emenda em fotos:
 | Pixel | RGB565 big-endian | idem |
 | Ordem | column-major | idem |
 | Frame | **49680 bytes** (138×180×2, sem padding) | 64800 |
-| Área visível | tela inteira (sem offset) | 135×135 nas colunas 86..220 |
+| Área **visível** | **138 × 126** (topo; ~54 linhas de baixo ficam off-screen) | 135×135 nas colunas 86..220 |
+
+O framebuffer é 138×180, mas só as **126 primeiras linhas** aparecem no painel — as de
+baixo são buffer off-screen (mesma ideia do K86, que tinha colunas off-screen). A largura
+inteira (138) é visível. Logo a área útil é **138×126, alinhada ao topo**.
 
 Como medimos (e onde erramos):
 - **Cuidado com padrões periódicos.** Grade, split topo/base e listras igualmente espaçadas

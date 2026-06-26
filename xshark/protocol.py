@@ -73,14 +73,18 @@ def build_clear() -> bytes:
 # --- Imagem / GIF (opcodes 0xA5 init e 0x25 chunk) -------------------------
 #
 # Buffer da tela do X85 Pro (decifrado por calibração visual; ajustável por CLI):
-#   138 x 180, RGB565 big-endian, ordem column-major. A tela inteira é visível.
-#   Frame de exatamente 138*180*2 = 49680 bytes (sem padding). (O K86 é 240x135.)
-#   ATENÇÃO: padrões periódicos (grade) enganam a calibração porque o
-#   deslocamento "encaixa" nas linhas — confirme sempre com imagem assimétrica.
+#   Framebuffer 138 x 180 (column-major, RGB565 big-endian), frame de 138*180*2 =
+#   49680 bytes. MAS só as 126 primeiras linhas são VISÍVEIS no painel — as ~54
+#   de baixo ficam fora (igual ao K86, que tinha colunas off-screen). A largura
+#   inteira (138) é visível. Área útil: 138 x 126, alinhada ao topo.
+#   ATENÇÃO: padrões periódicos (grade) enganam a calibração porque o deslocamento
+#   "encaixa" nas linhas — confirme sempre com imagem assimétrica.
 SCREEN_WIDTH = 138
-SCREEN_HEIGHT = 180
+SCREEN_HEIGHT = 180        # altura do framebuffer (stride)
 VISIBLE_X = 0
+VISIBLE_Y = 0
 VISIBLE_W = 138
+VISIBLE_HEIGHT = 126       # linhas realmente visíveis no painel (topo)
 FRAME_BYTES = 49680  # 138 * 180 * 2 — tamanho exato de 1 frame
 
 CHUNK_DATA_LEN = 56  # 0x38 bytes de pixel por chunk (o último frame pode ter menos)

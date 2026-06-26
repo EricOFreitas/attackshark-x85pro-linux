@@ -66,12 +66,12 @@ def cmd_set_time(_args) -> int:
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"}
 
 
-def _upload_image(path: str, width: int, height: int, xoff: int) -> int:
+def _upload_image(path: str, width: int, height: int, xoff: int, fit: bool = False) -> int:
     """Carrega e envia uma imagem/GIF para a tela. Retorna o nº de frames enviados."""
     from .image import load_frames
     from .protocol import build_image_chunk, build_image_init, chunkify
 
-    frames, interval = load_frames(path, width=width, height=height, visible_x=xoff)
+    frames, interval = load_frames(path, width=width, height=height, visible_x=xoff, fit=fit)
     if len(frames) > 255:
         frames = frames[:255]
 
@@ -95,7 +95,7 @@ def _upload_image(path: str, width: int, height: int, xoff: int) -> int:
 
 def cmd_set_gif(args) -> int:
     try:
-        n = _upload_image(args.path, args.width, args.height, args.xoff)
+        n = _upload_image(args.path, args.width, args.height, args.xoff, args.fit)
     except Exception as exc:  # noqa: BLE001
         print(f"Erro ao enviar imagem: {exc}", file=sys.stderr)
         return 1
@@ -128,7 +128,7 @@ def cmd_playlist(args) -> int:
                 random.shuffle(order)
             for f in order:
                 try:
-                    n = _upload_image(str(f), args.width, args.height, args.xoff)
+                    n = _upload_image(str(f), args.width, args.height, args.xoff, args.fit)
                     print(f"  → {f.name} ({n} frame(s))")
                 except Exception as exc:  # noqa: BLE001
                     print(f"  ! {f.name}: {exc}", file=sys.stderr)
@@ -156,6 +156,7 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("--width", type=int, default=138, help="largura do buffer (X85 Pro=138)")
         p.add_argument("--height", type=int, default=180, help="altura do buffer (X85 Pro=180)")
         p.add_argument("--xoff", type=int, default=0, help="coluna inicial visível (default 0)")
+        p.add_argument("--fit", action="store_true", help="preserva proporção (letterbox)")
 
     p_gif = sub.add_parser("set-gif", help="envia uma imagem ou GIF para a tela")
     p_gif.add_argument("path", help="caminho do PNG/JPG/GIF")

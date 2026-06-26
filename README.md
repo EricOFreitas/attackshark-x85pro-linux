@@ -70,9 +70,11 @@ xshark playlist ~/telinha --interval 30 [--shuffle]  # rotaciona imagens/GIFs de
 > A telinha não guarda playlist — o `playlist` fica reenviando cada imagem a cada `--interval`
 > segundos (Ctrl+C para parar). Cada envio leva alguns segundos, então use intervalos folgados.
 
-A tela do X85 Pro é **138×180, RGB565 big-endian, column-major** (frame de 49680 bytes) —
-geometria decifrada por calibração visual; ver [`docs/PROTOCOL.md`](docs/PROTOCOL.md). Para
-outros modelos, ajuste com `--width/--height/--xoff`.
+A tela do X85 Pro é **138×180, RGB565 big-endian, column-major** (frame de 49680 bytes), mas
+só **138×126 são visíveis** (as linhas de baixo ficam off-screen). As imagens já respeitam
+essa área; use `--fit` para preservar a proporção (letterbox). Geometria decifrada por
+calibração visual — ver [`docs/PROTOCOL.md`](docs/PROTOCOL.md). Outros modelos: ajuste com
+`--width/--height/--xoff`.
 
 ## Sincronizar a hora automaticamente (systemd user)
 

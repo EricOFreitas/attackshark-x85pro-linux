@@ -45,3 +45,14 @@ def test_load_frames_animated_gif(tmp_path):
 
 def test_default_screen_dims_are_x85():
     assert (SCREEN_WIDTH, SCREEN_HEIGHT) == (138, 180)
+
+
+def test_fit_mode_letterboxes_without_crashing(tmp_path):
+    from xshark.protocol import VISIBLE_HEIGHT, SCREEN_HEIGHT
+
+    assert VISIBLE_HEIGHT < SCREEN_HEIGHT  # parte do framebuffer é off-screen
+    path = tmp_path / "wide.png"
+    Image.new("RGB", (300, 100), (200, 50, 50)).save(path)  # imagem larga
+    frames, _ = image.load_frames(str(path), fit=True)
+    assert len(frames) == 1
+    assert len(frames[0]) == FRAME_BYTES
