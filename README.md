@@ -6,8 +6,12 @@
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 Driver/CLI open-source em Linux para o teclado **Attack Shark X85 Pro** (e parentes com a
-mesma telinha TFT). Foco inicial: **acertar o relógio da tela** sem depender do app oficial
-Windows/Mac — e, depois, enviar GIFs e ler bateria.
+mesma telinha TFT): **acertar o relógio da tela** e **enviar imagens/GIFs**, sem depender do
+app oficial Windows/Mac.
+
+> **Projeto hobby, distribuído como está (as-is).** Funciona e resolve o que eu precisava, mas
+> não há garantia de manutenção nem promessa de novos recursos. Use à vontade; PRs são bem-vindos,
+> mas podem demorar ou não ser respondidos.
 
 ## Modelos
 
@@ -17,9 +21,9 @@ Windows/Mac — e, depois, enviar GIFs e ler bateria.
 | K86 | `3151:4015` | ↗ via [AttackManatee](https://github.com/Jinori/AttackManatee) (tela 240×135) |
 | outros Attack Shark com tela | ? | [reporte aqui](../../issues/new?template=modelo-compativel.md) |
 
-> ✅ **Status: `set-time` funcionando no X85 Pro.** O protocolo da tela (reversado pelo
+> ✅ **`set-time` e `set-gif` funcionando no X85 Pro.** O protocolo da tela (reversado pelo
 > [AttackManatee](https://github.com/Jinori/AttackManatee) para o K86) é compatível com o
-> X85 Pro. Próximos alvos: GIF e bateria. Veja [`docs/PROTOCOL.md`](docs/PROTOCOL.md).
+> X85 Pro. Veja [`docs/PROTOCOL.md`](docs/PROTOCOL.md).
 
 ## Por que existe
 
