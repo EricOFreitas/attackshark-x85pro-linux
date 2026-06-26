@@ -64,7 +64,11 @@ xshark probe          # lista o dispositivo e lê um feature report
 xshark set-time       # ✅ sincroniza o relógio da tela com o do sistema
 xshark set-gif a.png  # ✅ envia imagem (PNG/JPG) para a tela
 xshark set-gif a.gif  # ✅ envia GIF animado (multi-frame, em loop)
+xshark playlist ~/telinha --interval 30 [--shuffle]  # rotaciona imagens/GIFs de uma pasta
 ```
+
+> A telinha não guarda playlist — o `playlist` fica reenviando cada imagem a cada `--interval`
+> segundos (Ctrl+C para parar). Cada envio leva alguns segundos, então use intervalos folgados.
 
 A tela do X85 Pro é **138×180, RGB565 big-endian, column-major** (frame de 49680 bytes) —
 geometria decifrada por calibração visual; ver [`docs/PROTOCOL.md`](docs/PROTOCOL.md). Para

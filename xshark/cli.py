@@ -1,8 +1,4 @@
-"""CLI do xshark.
-
-Hoje só `probe` está funcional — os comandos de escrita aguardam o protocolo ser
-confirmado (ver docs/PROTOCOL.md).
-"""
+"""CLI do xshark: probe, set-time, set-gif e playlist."""
 
 from __future__ import annotations
 
@@ -67,51 +63,80 @@ def cmd_set_time(_args) -> int:
         return 1
 
 
-def cmd_set_gif(args) -> int:
+IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"}
+
+
+def _upload_image(path: str, width: int, height: int, xoff: int) -> int:
+    """Carrega e envia uma imagem/GIF para a tela. Retorna o nº de frames enviados."""
     from .image import load_frames
     from .protocol import build_image_chunk, build_image_init, chunkify
 
-    try:
-        frames, interval = load_frames(
-            args.path, width=args.width, height=args.height, visible_x=args.xoff
-        )
-    except Exception as exc:  # noqa: BLE001
-        print(f"Erro ao ler imagem: {exc}", file=sys.stderr)
-        return 1
-
+    frames, interval = load_frames(path, width=width, height=height, visible_x=xoff)
     if len(frames) > 255:
-        print(f"GIF tem {len(frames)} frames; usando os primeiros 255.")
         frames = frames[:255]
 
     frame_count = len(frames)
     size_per_frame = len(frames[0])
     buffer = b"".join(frames)
-    total_chunks = frame_count * ((size_per_frame + 55) // 56)
-    print(
-        f"Enviando {frame_count} frame(s) de {size_per_frame} bytes "
-        f"(interval={interval}ms, ~{total_chunks} chunks)…"
-    )
 
-    try:
-        with XSharkDevice() as dev:
-            dev.send_feature(
-                build_image_init(
-                    frame_count, interval, size_per_frame,
-                    width=args.width, height=args.height,
+    with XSharkDevice() as dev:
+        dev.send_feature(
+            build_image_init(frame_count, interval, size_per_frame, width=width, height=height)
+        )
+        for frame_idx in range(frame_count):
+            base = frame_idx * size_per_frame
+            frame = buffer[base : base + size_per_frame]
+            for chunk_idx, data in chunkify(frame):
+                dev.send_feature(
+                    build_image_chunk(frame_idx, frame_count, interval, chunk_idx, data)
                 )
-            )
-            for frame_idx in range(frame_count):
-                base = frame_idx * size_per_frame
-                frame = buffer[base : base + size_per_frame]
-                for chunk_idx, data in chunkify(frame):
-                    dev.send_feature(
-                        build_image_chunk(frame_idx, frame_count, interval, chunk_idx, data)
-                    )
+    return frame_count
+
+
+def cmd_set_gif(args) -> int:
+    try:
+        n = _upload_image(args.path, args.width, args.height, args.xoff)
     except Exception as exc:  # noqa: BLE001
-        print(f"Falha no envio: {exc}", file=sys.stderr)
+        print(f"Erro ao enviar imagem: {exc}", file=sys.stderr)
+        return 1
+    print(f"OK — {n} frame(s) enviado(s). Confira a telinha. 🦈")
+    return 0
+
+
+def cmd_playlist(args) -> int:
+    import random
+    import time
+    from pathlib import Path
+
+    folder = Path(args.dir)
+    if not folder.is_dir():
+        print(f"Pasta não encontrada: {folder}", file=sys.stderr)
+        return 1
+    files = sorted(p for p in folder.iterdir() if p.suffix.lower() in IMAGE_EXTS)
+    if not files:
+        print(f"Nenhuma imagem em {folder} ({', '.join(sorted(IMAGE_EXTS))})", file=sys.stderr)
         return 1
 
-    print("OK — imagem enviada. Confira a telinha. 🦈")
+    print(
+        f"Playlist: {len(files)} imagem(ns), {args.interval}s cada"
+        f"{' (shuffle)' if args.shuffle else ''}. Ctrl+C para parar."
+    )
+    try:
+        while True:
+            order = list(files)
+            if args.shuffle:
+                random.shuffle(order)
+            for f in order:
+                try:
+                    n = _upload_image(str(f), args.width, args.height, args.xoff)
+                    print(f"  → {f.name} ({n} frame(s))")
+                except Exception as exc:  # noqa: BLE001
+                    print(f"  ! {f.name}: {exc}", file=sys.stderr)
+                time.sleep(args.interval)
+            if args.once:
+                break
+    except KeyboardInterrupt:
+        print("\nPlaylist parada.")
     return 0
 
 
@@ -127,12 +152,23 @@ def main(argv: list[str] | None = None) -> int:
         func=cmd_set_time
     )
 
+    def add_geometry(p):
+        p.add_argument("--width", type=int, default=138, help="largura do buffer (X85 Pro=138)")
+        p.add_argument("--height", type=int, default=180, help="altura do buffer (X85 Pro=180)")
+        p.add_argument("--xoff", type=int, default=0, help="coluna inicial visível (default 0)")
+
     p_gif = sub.add_parser("set-gif", help="envia uma imagem ou GIF para a tela")
     p_gif.add_argument("path", help="caminho do PNG/JPG/GIF")
-    p_gif.add_argument("--width", type=int, default=138, help="largura do buffer (X85 Pro=138)")
-    p_gif.add_argument("--height", type=int, default=180, help="altura do buffer (X85 Pro=180)")
-    p_gif.add_argument("--xoff", type=int, default=0, help="coluna inicial visível (default 0)")
+    add_geometry(p_gif)
     p_gif.set_defaults(func=cmd_set_gif)
+
+    p_pl = sub.add_parser("playlist", help="rotaciona imagens/GIFs de uma pasta na tela")
+    p_pl.add_argument("dir", help="pasta com as imagens/GIFs")
+    p_pl.add_argument("--interval", type=float, default=30, help="segundos por imagem (default 30)")
+    p_pl.add_argument("--shuffle", action="store_true", help="ordem aleatória")
+    p_pl.add_argument("--once", action="store_true", help="passa uma vez e para (não repete)")
+    add_geometry(p_pl)
+    p_pl.set_defaults(func=cmd_playlist)
 
     args = parser.parse_args(argv)
     return args.func(args)
