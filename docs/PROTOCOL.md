@@ -53,6 +53,30 @@ inicial é que o pacote de "set clock" tenha a forma:
 [ cmd, ... , ano, mês, dia, hora, min, seg, ... ]   (a confirmar)
 ```
 
+## Geometria da tela do X85 Pro (decifrada por calibração visual)
+
+Diferente do K86. Descoberta enviando padrões (split, linha, grade, seta) e medindo o
+shear/emenda em fotos:
+
+| Parâmetro | X85 Pro | K86 |
+|-----------|---------|-----|
+| Largura (colunas) | **180** | 240 |
+| Altura / stride (linhas por coluna) | **179** | 135 |
+| Pixel | RGB565 big-endian | idem |
+| Ordem | column-major | idem |
+| Slot de frame | **64800 bytes** (180×179=64440 + padding) | 64800 |
+| Área visível | tela inteira (sem offset) | 135×135 nas colunas 86..220 |
+
+Como medimos:
+- **Split topo/base** revelou a altura (≈180): shear sumiu perto de 179.
+- **Grade** confirmou: em S=179 as horizontais ficam retas (stride certo); largura 180 fecha
+  a maior parte da emenda.
+- **Seta/smiley** validaram orientação (topo-esquerda = origem) e que a imagem fica em pé.
+
+### Resíduo conhecido
+Sobra uma emenda vertical de ~1px à esquerda porque 179 não divide 32400 exatamente. A
+imagem fica perfeitamente reconhecível; refinar o offset/wrap é um bom first issue.
+
 ## A confirmar (TODO da captura)
 
 - [ ] Byte(s) de comando (primeiro byte costuma ser opcode).

@@ -67,3 +67,81 @@ def build_clear() -> bytes:
     """Comando 0xAC (limpar tela)."""
     header = bytes([OP_CLEAR, 0, 0, 0, 0, 0, 0])
     return header + bytes([_checksum(header)])
+
+
+# --- Imagem / GIF (opcodes 0xA5 init e 0x25 chunk) -------------------------
+#
+# Buffer da tela do X85 Pro (decifrado por calibração visual; ajustável por CLI):
+#   180 x 179, RGB565 big-endian, ordem column-major. A tela inteira é visível.
+#   O "slot" de frame que o firmware espera é de 64800 bytes (180x179 = 64440
+#   bytes de pixel + padding até 64800). (O K86 é 240x135 — modelos diferem.)
+SCREEN_WIDTH = 180
+SCREEN_HEIGHT = 179
+VISIBLE_X = 0
+VISIBLE_W = 180
+FRAME_BYTES = 64800  # tamanho do slot de 1 frame esperado pelo dispositivo
+
+CHUNK_DATA_LEN = 56  # 0x38 bytes de pixel por chunk (o último frame pode ter menos)
+
+
+def build_image_init(
+    frame_count: int,
+    interval_ms: int,
+    size_per_frame: int = FRAME_BYTES,
+    x_offset: int = 0,
+    width: int = SCREEN_WIDTH,
+    height: int = SCREEN_HEIGHT,
+) -> bytes:
+    """Comando 0xA5: prepara o envio de 1 imagem (frame_count=1) ou animação.
+
+        A5 00 <nframes> <interval> <size_lo> <size_hi> 00 <csum> | <x_lo> <x_hi> <w> <h>
+
+    `size_per_frame` é o tamanho em bytes de um frame (uint16 little-endian).
+    Os 4 bytes finais (trailing) NÃO entram no checksum.
+    """
+    header = bytes(
+        [
+            OP_IMAGE_INIT,
+            0x00,
+            frame_count & 0xFF,
+            interval_ms & 0xFF,
+            size_per_frame & 0xFF,
+            (size_per_frame >> 8) & 0xFF,
+            0x00,
+        ]
+    )
+    trailing = bytes([x_offset & 0xFF, (x_offset >> 8) & 0xFF, width & 0xFF, height & 0xFF])
+    return header + bytes([_checksum(header)]) + trailing
+
+
+def chunkify(frame: bytes, chunk_len: int = CHUNK_DATA_LEN):
+    """Quebra os bytes de um frame em (chunk_idx, data) sequenciais."""
+    for idx, base in enumerate(range(0, len(frame), chunk_len)):
+        yield idx, frame[base : base + chunk_len]
+
+
+def build_image_chunk(
+    frame_idx: int,
+    frame_count: int,
+    interval_ms: int,
+    chunk_idx: int,
+    data: bytes,
+) -> bytes:
+    """Comando 0x25: um pedaço de pixels.
+
+        25 <frame_idx> <nframes> <interval> <chunk_lo> <chunk_hi> <data_len> <csum> | <data...>
+
+    `chunk_idx` é uint16 little-endian. Os pixels (data) NÃO entram no checksum.
+    """
+    header = bytes(
+        [
+            OP_IMAGE_CHUNK,
+            frame_idx & 0xFF,
+            frame_count & 0xFF,
+            interval_ms & 0xFF,
+            chunk_idx & 0xFF,
+            (chunk_idx >> 8) & 0xFF,
+            len(data) & 0xFF,
+        ]
+    )
+    return header + bytes([_checksum(header)]) + data

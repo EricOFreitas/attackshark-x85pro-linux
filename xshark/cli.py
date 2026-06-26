@@ -67,6 +67,54 @@ def cmd_set_time(_args) -> int:
         return 1
 
 
+def cmd_set_gif(args) -> int:
+    from .image import load_frames
+    from .protocol import build_image_chunk, build_image_init, chunkify
+
+    try:
+        frames, interval = load_frames(
+            args.path, width=args.width, height=args.height, visible_x=args.xoff
+        )
+    except Exception as exc:  # noqa: BLE001
+        print(f"Erro ao ler imagem: {exc}", file=sys.stderr)
+        return 1
+
+    if len(frames) > 255:
+        print(f"GIF tem {len(frames)} frames; usando os primeiros 255.")
+        frames = frames[:255]
+
+    frame_count = len(frames)
+    size_per_frame = len(frames[0])
+    buffer = b"".join(frames)
+    total_chunks = frame_count * ((size_per_frame + 55) // 56)
+    print(
+        f"Enviando {frame_count} frame(s) de {size_per_frame} bytes "
+        f"(interval={interval}ms, ~{total_chunks} chunks)…"
+    )
+
+    try:
+        with XSharkDevice() as dev:
+            dev.send_feature(
+                build_image_init(
+                    frame_count, interval, size_per_frame,
+                    width=args.width, height=args.height,
+                )
+            )
+            for frame_idx in range(frame_count):
+                base = frame_idx * size_per_frame
+                frame = buffer[base : base + size_per_frame]
+                for chunk_idx, data in chunkify(frame):
+                    dev.send_feature(
+                        build_image_chunk(frame_idx, frame_count, interval, chunk_idx, data)
+                    )
+    except Exception as exc:  # noqa: BLE001
+        print(f"Falha no envio: {exc}", file=sys.stderr)
+        return 1
+
+    print("OK — imagem enviada. Confira a telinha. 🦈")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="xshark", description=__doc__)
     parser.add_argument("--version", action="version", version=f"xshark {__version__}")
@@ -75,9 +123,16 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("probe", help="lista interfaces e lê um feature report").set_defaults(
         func=cmd_probe
     )
-    sub.add_parser("set-time", help="(TODO) sincroniza o relógio da tela").set_defaults(
+    sub.add_parser("set-time", help="sincroniza o relógio da tela").set_defaults(
         func=cmd_set_time
     )
+
+    p_gif = sub.add_parser("set-gif", help="envia uma imagem ou GIF para a tela")
+    p_gif.add_argument("path", help="caminho do PNG/JPG/GIF")
+    p_gif.add_argument("--width", type=int, default=180, help="largura do buffer (X85 Pro=180)")
+    p_gif.add_argument("--height", type=int, default=179, help="altura do buffer (X85 Pro=179)")
+    p_gif.add_argument("--xoff", type=int, default=0, help="coluna inicial da área visível (default 0)")
+    p_gif.set_defaults(func=cmd_set_gif)
 
     args = parser.parse_args(argv)
     return args.func(args)
