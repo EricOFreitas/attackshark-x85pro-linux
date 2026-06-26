@@ -1,0 +1,11 @@
+[Unit]
+Description=Sincroniza o relogio da tela do Attack Shark periodicamente
+
+[Timer]
+# No login/boot e a cada 6h (a tela mantem a hora sozinha; isso so corrige drift/reset).
+OnStartupSec=30
+OnUnitActiveSec=6h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,8 @@
+[Unit]
+Description=Sincroniza o relogio da tela do Attack Shark X85 Pro com o sistema
+After=multi-user.target
+
+[Service]
+Type=oneshot
+# Ajuste o caminho do venv se necessario.
+ExecStart=%h/Projetos/xshark/.venv/bin/xshark set-time
