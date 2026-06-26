@@ -82,6 +82,10 @@ systemctl --user daemon-reload
 systemctl --user enable --now xshark-synctime.timer
 ```
 
+## Próximos passos
+
+Ideias e tarefas futuras estão em [`ROADMAP.md`](ROADMAP.md) (bateria, brilho, PyPI, refino do GIF…).
+
 ## Desenvolvimento e testes
 
 ```bash
