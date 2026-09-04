@@ -16,6 +16,6 @@ Type=oneshot
 # apontando para o venv:  ln -sf "$PWD/.venv/bin/xshark" ~/.local/bin/xshark).
 ExecStart=%h/.local/bin/xshark set-time
 # Instalado pelo gerenciador de pacotes:  ExecStart=/usr/bin/xshark set-time
-# Direto do venv do repo:                 ExecStart=%h/Projetos/xshark/.venv/bin/xshark set-time
+# Direto do venv do repo:                 ExecStart=%h/Projetos/attackshark-x85pro-linux/.venv/bin/xshark set-time
 Restart=on-failure
 RestartSec=30
