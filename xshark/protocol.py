@@ -2,7 +2,7 @@
 
 O formato do frame foi reversado pelo projeto AttackManatee para o K86 (mesmo
 vendor 0x3151, mesmo canal usagePage=0xFFFF/usage=0x0002, feature report de 64 bytes).
-Confirmado compatível com o X85 Pro (3151:5002). Crédito:
+Confirmado compatível com o X85 Pro (3151:5002 no cabo, 3151:5006 no dongle). Crédito:
 https://github.com/Jinori/AttackManatee  (docs/protocol.md)
 
 Frame de saída:
