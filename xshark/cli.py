@@ -6,7 +6,13 @@ import argparse
 import sys
 
 from . import __version__
-from .device import PRODUCT_ID, VENDOR_ID, XSharkDevice, find_vendor_path
+from .device import (
+    VENDOR_ID,
+    XSharkDevice,
+    enumerate_interfaces,
+    find_vendor_path,
+    product_ids,
+)
 
 try:
     import hid
@@ -16,15 +22,28 @@ except ImportError:  # pragma: no cover
 
 def cmd_probe(_args) -> int:
     if hid is None:
-        print("Falta a dependência 'hid' (pip install hid).", file=sys.stderr)
+        print(
+            "Falta a dependência 'hid'.\n"
+            "  Arch/Omarchy:   sudo pacman -S hidapi python-hidapi\n"
+            "  Debian/Ubuntu:  sudo apt install libhidapi-hidraw0 && pip install hid",
+            file=sys.stderr,
+        )
         return 1
 
-    infos = hid.enumerate(VENDOR_ID, PRODUCT_ID)
+    infos = enumerate_interfaces()
     if not infos:
-        print(f"Teclado {VENDOR_ID:04x}:{PRODUCT_ID:04x} não encontrado.", file=sys.stderr)
+        pids = ", ".join(f"{VENDOR_ID:04x}:{pid:04x}" for pid in product_ids())
+        print(f"Teclado não encontrado (procurei {pids}).", file=sys.stderr)
+        print(
+            "Conecte pelo cabo USB ou pelo receptor 2.4G — no Bluetooth o canal "
+            "da tela não é exposto.",
+            file=sys.stderr,
+        )
         return 1
 
-    print(f"Encontrado {VENDOR_ID:04x}:{PRODUCT_ID:04x} — {len(infos)} interface(s):")
+    pid = infos[0].get("product_id", 0)
+    modo = {0x5002: "cabo USB", 0x5006: "receptor 2.4G"}.get(pid, "modo desconhecido")
+    print(f"Encontrado {VENDOR_ID:04x}:{pid:04x} ({modo}) — {len(infos)} interface(s):")
     for i in infos:
         print(
             f"  iface={i.get('interface_number'):>2}  "
