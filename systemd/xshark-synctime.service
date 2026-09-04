@@ -1,8 +1,21 @@
 [Unit]
 Description=Sincroniza o relogio da tela do Attack Shark X85 Pro com o sistema
-After=multi-user.target
+# Unit de usuario: instale em ~/.config/systemd/user/ e ative o .timer.
+# O cabo/dongle pode nao estar pronto no primeiro disparo apos o boot, entao
+# tentamos de novo — mas com limite, para uma instalacao errada nao virar loop.
+StartLimitBurst=3
+StartLimitIntervalSec=300
 
 [Service]
 Type=oneshot
-# Ajuste o caminho do venv se necessario.
-ExecStart=%h/Projetos/xshark/.venv/bin/xshark set-time
+# Caminho ABSOLUTO e obrigatorio na pratica: um ExecStart sem barra e procurado
+# num PATH fixo embutido no systemd (/usr/local/sbin:/usr/local/bin:/usr/sbin:
+# /usr/bin), que NAO inclui ~/.local/bin nem venvs — daria erro 203/EXEC.
+#
+# Padrao: binario em ~/.local/bin (pipx, `pip install --user`, ou um symlink
+# apontando para o venv:  ln -sf "$PWD/.venv/bin/xshark" ~/.local/bin/xshark).
+ExecStart=%h/.local/bin/xshark set-time
+# Instalado pelo gerenciador de pacotes:  ExecStart=/usr/bin/xshark set-time
+# Direto do venv do repo:                 ExecStart=%h/Projetos/xshark/.venv/bin/xshark set-time
+Restart=on-failure
+RestartSec=30

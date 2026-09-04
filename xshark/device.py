@@ -6,8 +6,19 @@ Feature reports de 64 bytes (report id 0). Ver docs/PROTOCOL.md.
 
 from __future__ import annotations
 
+import os
+
 VENDOR_ID = 0x3151
-PRODUCT_ID = 0x5002
+
+# O teclado enumera com PIDs diferentes conforme o modo de conexão:
+#   0x5002 — cabo USB
+#   0x5006 — receptor 2.4G (dongle)
+# O canal vendor da tela existe nos dois modos, com o mesmo protocolo.
+# Bluetooth não expõe o canal vendor: use cabo ou dongle.
+PRODUCT_IDS = (0x5002, 0x5006)
+
+# Mantido por compatibilidade com quem importava o PID único.
+PRODUCT_ID = PRODUCT_IDS[0]
 
 # Usage page vendor observada no report descriptor (06 ff ff).
 VENDOR_USAGE_PAGE = 0xFFFF
@@ -16,15 +27,61 @@ VENDOR_USAGE_PAGE = 0xFFFF
 REPORT_SIZE = 64
 
 
+def product_ids() -> tuple[int, ...]:
+    """PIDs a procurar, com override por ambiente para modelos não mapeados.
+
+    XSHARK_PRODUCT_IDS aceita uma lista separada por vírgula, em hex ou decimal:
+        XSHARK_PRODUCT_IDS=0x5006 xshark probe
+    """
+    raw = os.environ.get("XSHARK_PRODUCT_IDS", "").strip()
+    if not raw:
+        return PRODUCT_IDS
+    ids = tuple(int(part, 0) for part in raw.split(",") if part.strip())
+    return ids or PRODUCT_IDS
+
+
 def _hid():
     """Importa o binding hidapi com mensagem amigável se a lib C faltar."""
     try:
         import hid
     except ImportError as exc:  # pragma: no cover
         raise RuntimeError(
-            "Falta a lib do hidapi. No Ubuntu: sudo apt install libhidapi-hidraw0"
+            "Falta a lib do hidapi.\n"
+            "  Arch/Omarchy:   sudo pacman -S hidapi python-hidapi\n"
+            "  Debian/Ubuntu:  sudo apt install libhidapi-hidraw0 && pip install hid"
         ) from exc
     return hid
+
+
+def _open_path(path: bytes):
+    """Abre o canal vendor cobrindo os dois bindings Python do hidapi.
+
+    Os dois se chamam `hid` mas têm APIs de abertura diferentes:
+      * pyhidapi (PyPI `hid`, apmorton)          -> hid.Device(path=...)
+      * cython-hidapi (Arch `python-hidapi`)     -> hid.device() + .open_path(...)
+    Depois de abertos, ambos expõem send_feature_report/get_feature_report/close
+    com a mesma assinatura, então o resto da classe não precisa saber qual é.
+    """
+    hid = _hid()
+    if hasattr(hid, "Device"):
+        return hid.Device(path=path)
+    if hasattr(hid, "device"):
+        dev = hid.device()
+        dev.open_path(path)
+        return dev
+    raise RuntimeError(
+        "O módulo 'hid' importado não é um binding hidapi reconhecido "
+        f"(nem Device nem device em {getattr(hid, '__file__', '?')})."
+    )
+
+
+def enumerate_interfaces() -> list[dict]:
+    """Lista as interfaces HID do teclado, em qualquer um dos PIDs conhecidos."""
+    hid = _hid()
+    found: list[dict] = []
+    for pid in product_ids():
+        found.extend(hid.enumerate(VENDOR_ID, pid))
+    return found
 
 
 def find_vendor_path() -> bytes:
@@ -34,11 +91,14 @@ def find_vendor_path() -> bytes:
     o Feature report de 64 bytes (usage 0x0002, maior interface_number — ver
     docs/PROTOCOL.md). Levanta RuntimeError se o teclado não for encontrado.
     """
-    candidates = _hid().enumerate(VENDOR_ID, PRODUCT_ID)
+    candidates = enumerate_interfaces()
     if not candidates:
+        pids = ", ".join(f"{VENDOR_ID:04x}:{pid:04x}" for pid in product_ids())
         raise RuntimeError(
-            f"Teclado {VENDOR_ID:04x}:{PRODUCT_ID:04x} não encontrado. "
-            "Está conectado por cabo USB?"
+            f"Teclado não encontrado (procurei {pids}). "
+            "Conecte pelo cabo USB ou pelo receptor 2.4G — no Bluetooth o canal "
+            "da tela não é exposto. Se o seu modelo usa outro PID, veja "
+            "'xshark probe' e a variável XSHARK_PRODUCT_IDS."
         )
 
     vendor = [c for c in candidates if c.get("usage_page", 0) >= 0xFF00]
@@ -65,7 +125,7 @@ class XSharkDevice:
         self._dev = None
 
     def __enter__(self) -> XSharkDevice:
-        self._dev = _hid().Device(path=self._path)
+        self._dev = _open_path(self._path)
         return self
 
     def __exit__(self, *exc) -> None:

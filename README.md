@@ -17,7 +17,7 @@ app oficial Windows/Mac.
 
 | Modelo | VID:PID | `set-time` |
 |--------|---------|------------|
-| X85 Pro | `3151:5002` | ✅ `set-time` + `set-gif` (tela 138×180) |
+| X85 Pro | `3151:5002` (cabo)<br>`3151:5006` (2.4G) | ✅ `set-time` + `set-gif` (tela 138×180) |
 | K86 | `3151:4015` | ↗ via [AttackManatee](https://github.com/Jinori/AttackManatee) (tela 240×135) |
 | outros Attack Shark com tela | ? | [reporte aqui](../../issues/new?template=modelo-compativel.md) |
 
@@ -36,7 +36,8 @@ como sincronizar. Este projeto resolve isso no Linux puro.
 | Item | Valor |
 |------|-------|
 | Modelo | Attack Shark X85 Pro |
-| USB VID:PID | `3151:5002` |
+| USB VID:PID | `3151:5002` (cabo USB) · `3151:5006` (receptor 2.4G) |
+| Bluetooth | ❌ não expõe o canal vendor — use cabo ou dongle |
 | Canal de controle | interface vendor, **usage page `0xFFFF`**, Feature reports de **64 bytes** |
 | Parente conhecido | K86 (`3151:4015`) — protocolo reversado em [Jinori/AttackManatee](https://github.com/Jinori/AttackManatee) |
 
@@ -46,20 +47,59 @@ A ideia é capturar os bytes que o app oficial manda **ao acertar a hora**, usan
 Chrome no Linux com um hook em `HIDDevice.prototype.sendFeatureReport`. Passo a passo em
 [`tools/webhid-capture.js`](tools/webhid-capture.js).
 
-## Instalação (dev)
+## Instalação
+
+A regra udev é comum a todas as distros — sem ela o `/dev/hidraw*` da tela só abre como root:
 
 ```bash
-# dependência de sistema (lib C do hidapi)
-sudo apt install libhidapi-hidraw0     # Debian/Ubuntu
-
-# regra udev p/ acessar o dispositivo sem root
 sudo cp tools/99-attackshark.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules && sudo udevadm trigger
+```
 
-# ambiente Python
+> A regra só passa a valer no **próximo evento de conexão**: reconecte o cabo ou o dongle 2.4G.
+
+### Arch / Omarchy
+
+Tudo está nos repositórios oficiais — não precisa de venv, `pip` nem AUR:
+
+```bash
+sudo pacman -S --needed hidapi python-hidapi python-pillow
+python3 -m venv --system-site-packages .venv && source .venv/bin/activate
+pip install -e . --no-deps
+```
+
+O `--no-deps` é proposital: as dependências já vieram do `pacman`, e sem ele o `pip`
+baixaria uma segunda cópia do binding pelo PyPI.
+
+> **Sobre o binding `hid`:** existem dois pacotes Python diferentes com esse mesmo nome de
+> módulo — o [pyhidapi](https://github.com/apmorton/pyhidapi) (PyPI `hid`, usado pelo
+> `pip install`) e o [cython-hidapi](https://github.com/trezor/cython-hidapi) (o que o Arch
+> empacota como `python-hidapi`). As APIs de abertura são incompatíveis; o `xshark` detecta
+> qual está instalado e usa a certa, então qualquer um dos dois serve.
+
+### Debian / Ubuntu
+
+```bash
+sudo apt install libhidapi-hidraw0
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e .
 ```
+
+### Sincronizar a hora sozinho (systemd)
+
+A unit chama `%h/.local/bin/xshark`. Se você instalou num venv, deixe um symlink lá
+(o `ExecStart` **precisa** de caminho absoluto — sem barra, o systemd procura num PATH
+fixo que não inclui `~/.local/bin` nem venvs, e falha com `203/EXEC`):
+
+```bash
+ln -sf "$PWD/.venv/bin/xshark" ~/.local/bin/xshark
+
+cp systemd/xshark-synctime.* ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now xshark-synctime.timer
+```
+
+Conferir: `systemctl --user list-timers xshark-synctime.timer`
 
 ## Uso
 

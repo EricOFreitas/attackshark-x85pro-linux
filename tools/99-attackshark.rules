@@ -1,15 +1,22 @@
 # Acesso sem root ao Attack Shark X85 Pro (e ao canal vendor da tela).
-# Instale em /etc/udev/rules.d/ e recarregue (depois RECONECTE o cabo USB):
+# Instale em /etc/udev/rules.d/ e recarregue (depois RECONECTE o cabo/dongle):
 #   sudo cp 99-attackshark.rules /etc/udev/rules.d/
 #   sudo udevadm control --reload-rules && sudo udevadm trigger
+#
+# PIDs: o teclado enumera diferente conforme o modo de conexão —
+#   5002 = cabo USB      5006 = receptor 2.4G (dongle)
+# O canal vendor da tela existe nos dois; o Bluetooth não o expõe.
 #
 # SEGURANÇA: MODE="0666" deixa o dispositivo legível/gravável por qualquer usuário
 # local (padrão de projetos de teclado tipo QMK/OpenRGB; o TAG+="uaccess" nem sempre
 # concede ACL em nós hidraw). Para uma máquina multiusuário, prefira a variante restrita
 # abaixo (0660 + grupo) — comente as linhas 0666 e descomente as 0660, e garanta que seu
 # usuário está no grupo plugdev (sudo usermod -aG plugdev $USER; depois relogar).
-SUBSYSTEM=="hidraw", ATTRS{idVendor}=="3151", ATTRS{idProduct}=="5002", MODE="0666", TAG+="uaccess"
-SUBSYSTEM=="usb",    ATTRS{idVendor}=="3151", ATTRS{idProduct}=="5002", MODE="0666", TAG+="uaccess"
+# No Arch/Omarchy o grupo plugdev não existe por padrão: crie com
+#   sudo groupadd -f plugdev
+# ou troque GROUP="plugdev" por GROUP="users".
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="3151", ATTRS{idProduct}=="5002|5006", MODE="0666", TAG+="uaccess"
+SUBSYSTEM=="usb",    ATTRS{idVendor}=="3151", ATTRS{idProduct}=="5002|5006", MODE="0666", TAG+="uaccess"
 # Variante restrita (recomendada em ambiente multiusuário):
-# SUBSYSTEM=="hidraw", ATTRS{idVendor}=="3151", ATTRS{idProduct}=="5002", MODE="0660", GROUP="plugdev", TAG+="uaccess"
-# SUBSYSTEM=="usb",    ATTRS{idVendor}=="3151", ATTRS{idProduct}=="5002", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+# SUBSYSTEM=="hidraw", ATTRS{idVendor}=="3151", ATTRS{idProduct}=="5002|5006", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+# SUBSYSTEM=="usb",    ATTRS{idVendor}=="3151", ATTRS{idProduct}=="5002|5006", MODE="0660", GROUP="plugdev", TAG+="uaccess"
