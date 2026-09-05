@@ -18,8 +18,15 @@ app oficial Windows/Mac.
 | Modelo | VID:PID | `set-time` |
 |--------|---------|------------|
 | X85 Pro | `3151:5002` (cabo)<br>`3151:5006` (2.4G) | ✅ `set-time` + `set-gif` (tela 138×180) |
-| K86 | `3151:4015` | ↗ via [AttackManatee](https://github.com/Jinori/AttackManatee) (tela 240×135) |
+| K86 | `3151:4015` (cabo)<br>`3151:4011` (2.4G) | ✅ `set-time` validado (cabo) · `set-gif` não testado |
 | outros Attack Shark com tela | ? | [reporte aqui](../../issues/new?template=modelo-compativel.md) |
+
+> ✅ **`set-time` confirmado também no K86** (`3151:4015`, cabo, Arch/kernel 7.1.9) — o
+> opcode `0x28` é aceito e o relógio da tela passa a bater com o do sistema. O `set-gif`
+> **não** foi testado nesse modelo: a geometria da tela do K86 ainda está por confirmar
+> (este README citava 240×135; o projeto
+> [shark-k86-mac](https://github.com/RaphaelCaputo2/shark-k86-mac) cita 128×128), então
+> os defaults `--width/--height` do X85 Pro não devem valer lá.
 
 > ✅ **`set-time` e `set-gif` funcionando no X85 Pro.** O protocolo da tela (reversado pelo
 > [AttackManatee](https://github.com/Jinori/AttackManatee) para o K86) é compatível com o

@@ -7,6 +7,7 @@ import sys
 
 from . import __version__
 from .device import (
+    PRODUCT_NAMES,
     VENDOR_ID,
     XSharkDevice,
     enumerate_interfaces,
@@ -42,8 +43,8 @@ def cmd_probe(_args) -> int:
         return 1
 
     pid = infos[0].get("product_id", 0)
-    modo = {0x5002: "cabo USB", 0x5006: "receptor 2.4G"}.get(pid, "modo desconhecido")
-    print(f"Encontrado {VENDOR_ID:04x}:{pid:04x} ({modo}) — {len(infos)} interface(s):")
+    modelo, modo = PRODUCT_NAMES.get(pid, ("modelo desconhecido", "modo desconhecido"))
+    print(f"Encontrado {VENDOR_ID:04x}:{pid:04x} ({modelo}, {modo}) — {len(infos)} interface(s):")
     for i in infos:
         print(
             f"  iface={i.get('interface_number'):>2}  "

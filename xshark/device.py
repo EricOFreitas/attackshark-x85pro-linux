@@ -11,11 +11,19 @@ import os
 VENDOR_ID = 0x3151
 
 # O teclado enumera com PIDs diferentes conforme o modo de conexão:
-#   0x5002 — cabo USB
-#   0x5006 — receptor 2.4G (dongle)
+#   X85 Pro:  0x5002 — cabo USB   |  0x5006 — receptor 2.4G (dongle)
+#   K86:      0x4015 — cabo USB   |  0x4011 — receptor 2.4G (dongle)
 # O canal vendor da tela existe nos dois modos, com o mesmo protocolo.
 # Bluetooth não expõe o canal vendor: use cabo ou dongle.
-PRODUCT_IDS = (0x5002, 0x5006)
+PRODUCT_IDS = (0x5002, 0x5006, 0x4015, 0x4011)
+
+# Rótulo de modelo/modo por PID, usado pelo `probe`.
+PRODUCT_NAMES = {
+    0x5002: ("X85 Pro", "cabo USB"),
+    0x5006: ("X85 Pro", "receptor 2.4G"),
+    0x4015: ("K86", "cabo USB"),
+    0x4011: ("K86", "receptor 2.4G"),
+}
 
 # Mantido por compatibilidade com quem importava o PID único.
 PRODUCT_ID = PRODUCT_IDS[0]
